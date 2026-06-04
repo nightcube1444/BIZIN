@@ -1,4 +1,3 @@
-# app/classifiers/category_classifier.py
 CATEGORY_MAP = {
     "SALES RETURN": "sales_return",
     "SALES PROMOTION GOODS": "marketing",
@@ -61,16 +60,13 @@ def detect_event_type(text):
     if not text:
         return "unknown"
 
-    text = str(text).upper()
+    text = str(text).upper().strip()
 
-    keywords = sorted(
+    for keyword in sorted(
         CATEGORY_MAP.keys(),
         key=len,
         reverse=True
-    )
-
-    for keyword in keywords:
-
+    ):
         if keyword in text:
             return CATEGORY_MAP[keyword]
 

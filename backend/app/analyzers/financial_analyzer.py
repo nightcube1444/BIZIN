@@ -1,22 +1,5 @@
-from app.classifiers.category_classifier import CATEGORY_MAP
-
-
-def detect_event_type(text):
-
-    if not text:
-        return "unknown"
-
-    text = text.upper()
-
-    for keyword in sorted(
-        CATEGORY_MAP.keys(),
-        key=len,
-        reverse=True
-    ):
-        if keyword in text:
-            return CATEGORY_MAP[keyword]
-
-    return "unknown"
+from app.classifiers.category_classifier import detect_event_type
+from app.analyzers.business_summary import generate_summary
 
 
 def calculate_kpis(events):
@@ -29,39 +12,57 @@ def calculate_kpis(events):
     credit_notes = 0
     borrowed_stock = 0
 
+    event_counts = {}
+
     for event in events:
 
         et = event["event_type"]
 
+        amount = float(
+            event.get("amount", 0) or 0
+        )
+
+        event_counts[et] = (
+            event_counts.get(et, 0) + 1
+        )
+
         if et == "sales":
-            sales += event["amount"]
+            sales += amount
 
         elif et == "purchase":
-            purchases += event["amount"]
+            purchases += amount
 
         elif et in [
             "office_expense",
             "vehicle_expense",
             "maintenance"
         ]:
-            expenses += event["amount"]
+            expenses += amount
 
         elif et == "pending_issue":
             pending_items += 1
 
         elif et == "credit_note":
-            credit_notes += event["amount"]
+            credit_notes += amount
 
         elif et == "borrowed_stock":
             borrowed_stock += 1
+
+    profit_estimate = (
+        sales
+        - purchases
+        - expenses
+    )
 
     return {
         "sales": sales,
         "purchases": purchases,
         "expenses": expenses,
+        "profit_estimate": profit_estimate,
         "pending_items": pending_items,
         "credit_notes": credit_notes,
-        "borrowed_stock": borrowed_stock
+        "borrowed_stock": borrowed_stock,
+        "event_counts": event_counts
     }
 
 
@@ -84,7 +85,10 @@ def analyze_workbook(cleaned_data):
                 "amount": row["amount"]
             })
 
+    kpis = calculate_kpis(events)
+
     return {
-        "kpis": calculate_kpis(events),
+        "kpis": kpis,
+        "summary": generate_summary(kpis),
         "events": events
     }
