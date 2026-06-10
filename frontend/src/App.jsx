@@ -1,11 +1,17 @@
 import { useState } from "react";
 import "./App.css";
+import PendingIssues from "./pages/PendingIssues";
+import DefectiveGoods from "./pages/DefectiveGoods";
+import Vehicles from "./pages/Vehicles";
+import Documents from "./pages/Documents";
+import Alerts from "./pages/Alerts";
 
 function App() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(false);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [page, setPage] = useState("dashboard");
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -55,9 +61,53 @@ function App() {
     report?.events
       ?.filter((event) => event.event_type === "credit_note")
       ?.sort((a, b) => (b.amount || 0) - (a.amount || 0))[0];
+  const topCompanies =
 
+  report?.events
+
+    ?.filter(
+
+      (event) =>
+
+        event.company &&
+
+        event.company !== "Unknown" &&
+
+        (event.amount || 0) > 0
+
+    )
+
+    ?.reduce((acc, event) => {
+
+      const name = event.company;
+
+      acc[name] =
+
+        (acc[name] || 0) +
+
+        (event.amount || 0);
+
+      return acc;
+
+    }, {});
+
+const topCompaniesList =
+
+  Object.entries(topCompanies || {})
+
+    .map(([company, amount]) => ({
+
+      company,
+
+      amount,
+
+    }))
+
+    .sort((a, b) => b.amount - a.amount)
+
+    .slice(0, 5);
   let verification = null;
-
+  
   if (report?.events && report?.kpis) {
     const salesEvents = report.events
       .filter((event) => event.event_type === "sales")
@@ -126,40 +176,57 @@ function App() {
   }
 
   const askAI = () => {
-    const q = question.toLowerCase();
+  const q = question.toLowerCase();
 
-    if (!report) {
-      setAnswer("Please upload a report first.");
-      return;
-    }
+  if (!report) {
+    setAnswer("Please upload a report first.");
+    return;
+  }
 
-    if (q.includes("sales")) {
-      setAnswer(
-        `Sales are ₹${(report.kpis.sales || 0).toLocaleString()}. This was verified from sales events.`
-      );
-    } else if (q.includes("profit")) {
-      setAnswer(
-        `Profit is ₹${(
-          report.kpis.profit_estimate || 0
-        ).toLocaleString()}. It is calculated as Sales - Purchases - Expenses.`
-      );
-    } else if (q.includes("credit")) {
-      setAnswer(
-        `Credit notes are ₹${(
-          report.kpis.credit_notes || 0
-        ).toLocaleString()}. The largest credit note is ₹${(
-          topCreditNote?.amount || 0
-        ).toLocaleString()}.`
-      );
-    } else if (q.includes("pending")) {
-      setAnswer(
-        `There are ${report.kpis.pending_items || 0} pending items.`
-      );
-    } else {
-      setAnswer(
-        "I can currently answer questions about sales, profit, credit notes, and pending items."
-      );
-    }
+  if (q.includes("sales")) {
+    setAnswer(
+      `Sales are ₹${(report.kpis.sales || 0).toLocaleString()}. This was verified from sales events.`
+    );
+  } 
+  
+  else if (q.includes("profit")) {
+    setAnswer(
+      `Profit is ₹${(report.kpis.profit_estimate || 0).toLocaleString()}. It is calculated as Sales - Purchases - Expenses.`
+    );
+  } 
+  
+  else if (q.includes("credit")) {
+    setAnswer(
+      `Credit notes are ₹${(report.kpis.credit_notes || 0).toLocaleString()}. The largest credit note is ₹${(topCreditNote?.amount || 0).toLocaleString()}.`
+    );
+  } 
+  
+  else if (q.includes("debug pending")) {
+    const pendingItems = report.events.filter(
+      (event) => event.event_type === "pending_issue"
+    );
+
+    setAnswer(JSON.stringify(pendingItems.slice(0, 3), null, 2));
+  } 
+  
+  else if (q.includes("pending")) {
+    const pendingCompanies = report.events
+      .filter((event) => event.event_type === "pending_issue")
+      .map((event) => event.company || "Unknown");
+
+    setAnswer(
+      pendingCompanies.length
+        ? pendingCompanies.join(", ")
+        : "No pending companies found."
+    );
+  } 
+  
+  else {
+    setAnswer(
+      "I can currently answer questions about sales, profit, credit notes, and pending items."
+    );
+  }
+
   };const getPartyName = (description) => {
   if (!description) return "Unknown";
 
@@ -190,14 +257,120 @@ function App() {
   return "Unknown";
 };
 
+  if (page === "pending") {
   return (
-    <div className="dashboard">
-      <h1>BIZTRACK AI</h1>
+    <PendingIssues
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
 
+if (page === "defective") {
+  return (
+    <DefectiveGoods
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+
+if (page === "vehicles") {
+  return (
+    <Vehicles
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+
+if (page === "documents") {
+  return (
+    <Documents
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+if (page === "alerts") {
+  return (
+    <Alerts
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+  return (
+    
+
+    
+    <div className="dashboard">
+      <h1>BIZINTAI</h1>
+
+
+      <div style={{ marginBottom: "20px" }}>
+    <button onClick={() => setPage("alerts")}>
+  Alerts
+</button>
+  <button onClick={() => setPage("documents")}>
+  Documents
+</button>
+  <button onClick={() => setPage("dashboard")}>
+    Dashboard
+  </button>
+
+  <button onClick={() => setPage("pending")}>
+    Pending Issues
+  </button>
+
+  <button onClick={() => setPage("defective")}>
+    Defective Goods
+  </button>
+
+  <button onClick={() => setPage("vehicles")}>
+    Vehicles
+  </button>
+</div>
       <div className="upload-section">
         <input type="file" accept=".xlsx,.xls" onChange={handleUpload} />
       </div>
+      <div className="quality-card">
+  <h2>🚨 Management Summary</h2>
 
+  <p>
+    <strong>Open Alerts:</strong> 4
+  </p>
+
+  <p>
+    <strong>Pending Issues:</strong> 11
+  </p>
+
+  <p>
+    <strong>Defective Goods:</strong> 7
+  </p>
+
+  <p>
+    <strong>Vehicles Due:</strong> 2
+  </p>
+
+  <p>
+    <strong>Documents Pending:</strong> 4
+  </p>
+
+  <hr />
+
+  <h3>📈 Business Health Score</h3>
+
+  <h1>82%</h1>
+</div>
+<div className="quality-card">
+  <h2>⚠ Today's Attention</h2>
+
+  <p>🚨 11 Pending Issues require action</p>
+
+  <p>🚨 Credit Notes exceed Sales</p>
+
+  <p>⚠ 7 Defective Goods unresolved</p>
+
+  <p>⚠ Vehicle service follow-up required</p>
+
+  <p>⚠ Missing documents need filing</p>
+</div>
       {loading && (
         <div className="quality-card">
           <h2>⏳ Processing Report...</h2>
@@ -215,7 +388,27 @@ function App() {
             <div className="card">
               <h3>Sales</h3>
               <h2>₹{(report.kpis.sales || 0).toLocaleString()}</h2>
+          <div className="cards">
+  <div className="card">
+    <h3>Pending Issues</h3>
+    <h2>11</h2>
+  </div>
 
+  <div className="card">
+    <h3>Defective Goods</h3>
+    <h2>7</h2>
+  </div>
+
+  <div className="card">
+    <h3>Vehicles Due</h3>
+    <h2>2</h2>
+  </div>
+
+  <div className="card">
+    <h3>Open Alerts</h3>
+    <h2>4</h2>
+  </div>
+</div>
               <details>
                 <summary>Explain Calculation</summary>
 
@@ -277,7 +470,11 @@ function App() {
             </p>
 
             <p>Pending Items: {report.kpis.pending_items || 0}</p>
-
+            <p>
+  Top Party:
+  {" "}
+  {topCompaniesList[0]?.company || "N/A"}
+</p>
             <p>
               Top Credit Note: ₹
               {(topCreditNote?.amount || 0).toLocaleString()}
@@ -421,12 +618,12 @@ function App() {
           )}
 
           <div className="quality-card">
-            <h2>🤖 Ask BIZTRACK AI</h2>
+            <h2>🤖 Ask BIZTRACK AI Beta</h2>
 
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask about sales, profit, credit notes, pending..."
+              placeholder="Try: sales, profit, credit notes, highest credit note..."
             />
 
             <button onClick={askAI}>Ask</button>
@@ -437,7 +634,21 @@ function App() {
               </p>
             )}
           </div>
+            <div className="quality-card">
+  <h2>🏢 Top Financial Parties</h2>
 
+  {topCompaniesList.length > 0 ? (
+    topCompaniesList.map((item, index) => (
+      <p key={index}>
+        {index + 1}. {item.company}
+        {" - "}
+        ₹{item.amount.toLocaleString()}
+      </p>
+    ))
+  ) : (
+    <p>No company data found.</p>
+  )}
+</div>
           <h2>🏆 Top Financial Events</h2>
 
           <table className="events-table">
@@ -463,7 +674,7 @@ function App() {
           </table>
         </>
       ) : null}
-    </div>
+         </div>
   );
 }
 
