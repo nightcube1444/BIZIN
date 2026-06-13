@@ -5,6 +5,10 @@ import DefectiveGoods from "./pages/DefectiveGoods";
 import Vehicles from "./pages/Vehicles";
 import Documents from "./pages/Documents";
 import Alerts from "./pages/Alerts";
+import StaffTasks from "./pages/StaffTasks";
+import AgingAnalysis from "./pages/AgingAnalysis";
+import SupplierPerformance from "./pages/SupplierPerformance";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 
 function App() {
   const [report, setReport] = useState(null);
@@ -265,10 +269,11 @@ const topCompaniesList =
   );
 }
 
-if (page === "defective") {
+ if (page === "defective") {
   return (
     <DefectiveGoods
       goBack={() => setPage("dashboard")}
+      report={report}
     />
   );
 }
@@ -288,10 +293,42 @@ if (page === "documents") {
     />
   );
 }
+
 if (page === "alerts") {
   return (
     <Alerts
       goBack={() => setPage("dashboard")}
+      report={report}
+    />
+  );
+}
+if (page === "staff") {
+  return (
+    <StaffTasks
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+if (page === "aging") {
+  return (
+    <AgingAnalysis
+      goBack={() => setPage("dashboard")}
+    />
+  );
+}
+if (page === "suppliers") {
+  return (
+    <SupplierPerformance
+      goBack={() => setPage("dashboard")}
+      report={report}
+    />
+  );
+}
+if (page === "executive") {
+  return (
+    <ExecutiveDashboard
+      goBack={() => setPage("dashboard")}
+      report={report}
     />
   );
 }
@@ -305,15 +342,23 @@ if (page === "alerts") {
 
       <div style={{ marginBottom: "20px" }}>
     <button onClick={() => setPage("alerts")}>
-  Alerts
-</button>
+     Alerts
+  </button>
+ <button onClick={() => setPage("aging")}>
+   Aging Analysis
+  </button>
   <button onClick={() => setPage("documents")}>
-  Documents
-</button>
+   Documents
+  </button>
   <button onClick={() => setPage("dashboard")}>
     Dashboard
   </button>
-
+  <button onClick={() => setPage("staff")}>
+    Staff Tasks
+  </button>
+  <button onClick={() => setPage("executive")}>
+   Executive Dashboard
+  </button>
   <button onClick={() => setPage("pending")}>
     Pending Issues
   </button>
@@ -321,7 +366,9 @@ if (page === "alerts") {
   <button onClick={() => setPage("defective")}>
     Defective Goods
   </button>
-
+  <button onClick={() => setPage("suppliers")}>
+   Supplier Performance
+  </button>
   <button onClick={() => setPage("vehicles")}>
     Vehicles
   </button>
@@ -382,21 +429,21 @@ if (page === "alerts") {
         <h2>Upload Report</h2>
       ) : report ? (
         <>
-          <h2>{report.filename}</h2>
-
-          <div className="cards">
-            <div className="card">
-              <h3>Sales</h3>
-              <h2>₹{(report.kpis.sales || 0).toLocaleString()}</h2>
-          <div className="cards">
+        <div className="cards">
   <div className="card">
     <h3>Pending Issues</h3>
-    <h2>11</h2>
+    <h2>{report?.kpis?.pending_items || 0}</h2>
   </div>
 
   <div className="card">
     <h3>Defective Goods</h3>
-    <h2>7</h2>
+    <h2>
+      {
+        report?.events?.filter(
+          (e) => e.event_type === "defective_goods"
+        ).length || 0
+      }
+    </h2>
   </div>
 
   <div className="card">
@@ -409,6 +456,15 @@ if (page === "alerts") {
     <h2>4</h2>
   </div>
 </div>
+          <h2>{report.filename}</h2>
+
+          <div className="cards">
+            <div className="card">
+              <h3>Sales</h3>
+              <h2>₹{(report.kpis.sales || 0).toLocaleString()}</h2>
+          <div className="cards">
+   
+            </div>
               <details>
                 <summary>Explain Calculation</summary>
 

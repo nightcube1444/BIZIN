@@ -13,6 +13,7 @@ class PendingIssue(Base):
     assigned_to = Column(String, default="Unassigned")
     priority = Column(String, default="Medium")
     status = Column(String, default="Pending")
+    days_open = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -24,4 +25,5 @@ class DefectiveGood(Base):
     supplier = Column(String, default="Unknown")
     quantity = Column(Integer, default=1)
     status = Column(String, default="Pending")
+    return_date = Column(String, default="")
     created_at = Column(DateTime, default=datetime.utcnow)

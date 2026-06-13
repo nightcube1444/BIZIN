@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function DefectiveGoods({ goBack }) {
+function DefectiveGoods({ goBack, report }) {
   const [items, setItems] = useState([
     {
       id: 1,
@@ -26,6 +26,20 @@ function DefectiveGoods({ goBack }) {
     quantity: 1,
     dateReturned: "",
   });
+
+  const reportDefectiveItems =
+    report?.events
+      ?.filter((event) => event.event_type === "defective_goods")
+      ?.map((event, index) => ({
+        id: `report-${index}`,
+        product: event.company || "Unknown",
+        supplier: event.company || "Unknown",
+        quantity: event.amount || 0,
+        dateReturned: event.date,
+        status: "From Report",
+      })) || [];
+
+  const allItems = [...reportDefectiveItems, ...items];
 
   const addItem = () => {
     if (!form.product || !form.supplier || !form.dateReturned) {
@@ -66,13 +80,15 @@ function DefectiveGoods({ goBack }) {
     setItems(items.filter((item) => item.id !== id));
   };
 
-  const pendingCount = items.filter(
+  const pendingCount = allItems.filter(
     (item) => item.status === "Pending"
   ).length;
 
-  const resolvedCount = items.filter(
+  const resolvedCount = allItems.filter(
     (item) => item.status === "Resolved"
   ).length;
+
+  const reportCount = reportDefectiveItems.length;
 
   return (
     <div className="dashboard">
@@ -122,7 +138,12 @@ function DefectiveGoods({ goBack }) {
       <div className="cards">
         <div className="card">
           <h3>Total Defective</h3>
-          <h2>{items.length}</h2>
+          <h2>{allItems.length}</h2>
+        </div>
+
+        <div className="card">
+          <h3>From Report</h3>
+          <h2>{reportCount}</h2>
         </div>
 
         <div className="card">
@@ -135,13 +156,31 @@ function DefectiveGoods({ goBack }) {
           <h2>{resolvedCount}</h2>
         </div>
       </div>
+      <div className="quality-card">
+  <h2>Defective Goods Summary</h2>
 
+  <p>
+    Imported from report: {reportCount}
+  </p>
+
+  <p>
+    Manually added: {items.length}
+  </p>
+
+  <p>
+    Pending manual cases: {pendingCount}
+  </p>
+
+  <p>
+    Resolved manual cases: {resolvedCount}
+  </p>
+</div>
       <table className="events-table">
         <thead>
           <tr>
             <th>Product</th>
             <th>Supplier</th>
-            <th>Quantity</th>
+            <th>Quantity / Amount</th>
             <th>Date Returned</th>
             <th>Status</th>
             <th>Actions</th>
@@ -149,7 +188,7 @@ function DefectiveGoods({ goBack }) {
         </thead>
 
         <tbody>
-          {items.map((item) => (
+          {allItems.map((item) => (
             <tr key={item.id}>
               <td>{item.product}</td>
               <td>{item.supplier}</td>
@@ -157,15 +196,22 @@ function DefectiveGoods({ goBack }) {
               <td>{item.dateReturned}</td>
               <td>{item.status}</td>
               <td>
-                {item.status !== "Resolved" && (
-                  <button onClick={() => resolveItem(item.id)}>
-                    Resolve
+                {item.status !== "Resolved" &&
+                  item.status !== "From Report" && (
+                    <button onClick={() => resolveItem(item.id)}>
+                      Resolve
+                    </button>
+                  )}
+
+                {item.status !== "From Report" && (
+                  <button onClick={() => deleteItem(item.id)}>
+                    Delete
                   </button>
                 )}
 
-                <button onClick={() => deleteItem(item.id)}>
-                  Delete
-                </button>
+                {item.status === "From Report" && (
+                  <span>Imported</span>
+                )}
               </td>
             </tr>
           ))}
